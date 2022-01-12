@@ -53,7 +53,12 @@ class Blockchain():
         previous_hash = '0'
         previous_proof = 1
         
-        for block in chain:
+        for i, block in enumerate(chain):
+            if i == 0:
+                previous_hash = self.hash_block(block)
+                previous_proof = proof
+                continue
+            
             if block['previous_hash'] != previous_hash:
                 return False
             
@@ -68,11 +73,34 @@ class Blockchain():
             
         return True
             
-    def mine_block(self):
-        pass
 
+# Creating a webapp       
+app = Flask(__name__)
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+        
+# Creating a blockchain
+bc = Blockchain()
 
 # Mining
-        
-bc = Blockchain()
-print(bc.is_chain_valid(bc.chain))
+@app.route('/mine_block', methods=['GET'])
+def mine_block():
+    previous_block = bc.get_previous_block()
+    previous_proof = previous_block['proof']
+    proof = bc.proof_of_work(previous_proof)
+    previous_hash = bc.hash_block(previous_block)
+    block = bc.create_block(proof, previous_hash)
+    response = {'message': 'Glhf',
+                'index': block['index'],
+                'timestamp': block['timestamp'],
+                'proof': block['proof'],
+                'previous_hash': block['previous_hash']}
+    return jsonify(response), 200
+
+@app.route('/get_chain', methods=['GET'])
+def get_chain():
+    response = {'chain': bc.chain,
+                'length': len(bc.chain)}
+    return jsonify(response), 200
+
+app.run(host='0.0.0.0', port=5000)
+    
